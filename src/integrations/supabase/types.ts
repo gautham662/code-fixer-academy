@@ -14,7 +14,184 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      badges: {
+        Row: {
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          requirement_value: number | null
+        }
+        Insert: {
+          badge_type: Database["public"]["Enums"]["badge_type"]
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          requirement_value?: number | null
+        }
+        Update: {
+          badge_type?: Database["public"]["Enums"]["badge_type"]
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          requirement_value?: number | null
+        }
+        Relationships: []
+      }
+      lessons: {
+        Row: {
+          created_at: string
+          description: string
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          expected_output: string
+          hints: string[] | null
+          id: string
+          language: Database["public"]["Enums"]["programming_language"]
+          order_index: number
+          points: number | null
+          starter_code: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          difficulty: Database["public"]["Enums"]["difficulty_level"]
+          expected_output: string
+          hints?: string[] | null
+          id?: string
+          language: Database["public"]["Enums"]["programming_language"]
+          order_index: number
+          points?: number | null
+          starter_code: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          difficulty?: Database["public"]["Enums"]["difficulty_level"]
+          expected_output?: string
+          hints?: string[] | null
+          id?: string
+          language?: Database["public"]["Enums"]["programming_language"]
+          order_index?: number
+          points?: number | null
+          starter_code?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          best_streak: number | null
+          created_at: string
+          current_streak: number | null
+          id: string
+          total_lessons_completed: number | null
+          total_points: number | null
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          best_streak?: number | null
+          created_at?: string
+          current_streak?: number | null
+          id?: string
+          total_lessons_completed?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          best_streak?: number | null
+          created_at?: string
+          current_streak?: number | null
+          id?: string
+          total_lessons_completed?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          attempts: number | null
+          completed_at: string
+          hints_used: number | null
+          id: string
+          lesson_id: string
+          time_taken: number | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          completed_at?: string
+          hints_used?: number | null
+          id?: string
+          lesson_id: string
+          time_taken?: number | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          completed_at?: string
+          hints_used?: number | null
+          id?: string
+          lesson_id?: string
+          time_taken?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +200,20 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      badge_type:
+        | "first_debug"
+        | "consecutive_solves"
+        | "language_master"
+        | "speed_demon"
+        | "accuracy_ace"
+      difficulty_level: "easy" | "medium" | "hard" | "expert"
+      programming_language:
+        | "python"
+        | "javascript"
+        | "java"
+        | "cpp"
+        | "go"
+        | "rust"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +340,23 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      badge_type: [
+        "first_debug",
+        "consecutive_solves",
+        "language_master",
+        "speed_demon",
+        "accuracy_ace",
+      ],
+      difficulty_level: ["easy", "medium", "hard", "expert"],
+      programming_language: [
+        "python",
+        "javascript",
+        "java",
+        "cpp",
+        "go",
+        "rust",
+      ],
+    },
   },
 } as const
