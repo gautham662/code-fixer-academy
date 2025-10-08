@@ -8,6 +8,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AppLayout } from "@/layouts/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Challenge from "./pages/Challenge";
+import Leaderboard from "./pages/Leaderboard";
+import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -25,9 +27,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
               <Route path="/challenge" element={<AppLayout><Challenge /></AppLayout>} />
-              <Route path="/learn" element={<AppLayout><div>Learn page coming soon...</div></AppLayout>} />
-              <Route path="/leaderboard" element={<AppLayout><div>Leaderboard coming soon...</div></AppLayout>} />
-              <Route path="/profile" element={<AppLayout><div>Profile page coming soon...</div></AppLayout>} />
+              <Route path="/leaderboard" element={<AppLayout><Leaderboard /></AppLayout>} />
+              <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

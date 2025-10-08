@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Lightbulb, RotateCcw, Play, CheckCircle, ArrowRight } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface Lesson {
   id: string;
@@ -33,6 +34,8 @@ export default function Challenge() {
   const [isRunning, setIsRunning] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('python');
   const [loading, setLoading] = useState(true);
+  const [attempts, setAttempts] = useState(0);
+  const [isFirstChallenge, setIsFirstChallenge] = useState(false);
 
   const languages = [
     { value: 'python', label: 'Python' },
@@ -59,8 +62,52 @@ export default function Challenge() {
       setCode(currentLesson.starter_code);
       setOutput('');
       setShowHints([]);
+      setAttempts(0);
+      checkIfFirstChallenge();
     }
   }, [currentLesson]);
+
+  const checkIfFirstChallenge = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('user_progress')
+      .select('id')
+      .eq('user_id', user.id);
+    
+    setIsFirstChallenge(!data || data.length === 0);
+  };
+
+  const triggerConfetti = () => {
+    const duration = 3000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+    const randomInRange = (min: number, max: number) => {
+      return Math.random() * (max - min) + min;
+    };
+
+    const interval = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+      });
+      confetti({
+        ...defaults,
+        particleCount,
+        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+      });
+    }, 250);
+  };
 
   const fetchLessons = async () => {
     try {
@@ -121,42 +168,67 @@ export default function Challenge() {
 
     const actualOutput = output.trim();
     const expectedOutput = currentLesson.expected_output.trim();
+    const newAttempts = attempts + 1;
+    setAttempts(newAttempts);
 
     if (actualOutput === expectedOutput) {
+      // Trigger confetti on first challenge completion
+      if (isFirstChallenge) {
+        triggerConfetti();
+      }
+      
       toast({
-        title: 'Correct Solution!',
+        title: '🎉 Correct Solution!',
         description: `You earned ${currentLesson.points} points!`,
         variant: 'default',
       });
       
-      // In a real app, save progress to database
-      saveProgress();
+      saveProgress(newAttempts);
       
-      // Move to next lesson
-      const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
-      if (currentIndex < lessons.length - 1) {
-        setCurrentLesson(lessons[currentIndex + 1]);
-      }
+      // Move to next lesson after a short delay
+      setTimeout(() => {
+        const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
+        if (currentIndex < lessons.length - 1) {
+          setCurrentLesson(lessons[currentIndex + 1]);
+        } else {
+          toast({
+            title: '🏆 All challenges completed!',
+            description: 'Try another language or check the leaderboard!',
+          });
+        }
+      }, 1500);
     } else {
-      toast({
-        title: 'Not quite right',
-        description: 'The output doesn\'t match the expected result. Try again!',
-        variant: 'destructive',
-      });
+      // Show hints automatically on second attempt
+      if (newAttempts === 2 && currentLesson.hints && currentLesson.hints.length > 0) {
+        const newShowHints = [...showHints];
+        newShowHints[0] = true;
+        setShowHints(newShowHints);
+        
+        toast({
+          title: '💡 Hint Unlocked!',
+          description: 'Check the hints section for guidance.',
+        });
+      } else {
+        toast({
+          title: 'Not quite right',
+          description: `Attempt ${newAttempts}. Keep trying!`,
+          variant: 'destructive',
+        });
+      }
     }
   };
 
-  const saveProgress = async () => {
+  const saveProgress = async (attemptCount: number) => {
     if (!user || !currentLesson) return;
 
     try {
       const hintsUsed = showHints.filter(Boolean).length;
       
-      await supabase.from('user_progress').upsert({
+      await supabase.from('user_progress').insert({
         user_id: user.id,
         lesson_id: currentLesson.id,
         hints_used: hintsUsed,
-        attempts: 1,
+        attempts: attemptCount,
       });
 
       // Update profile stats
@@ -190,6 +262,8 @@ export default function Challenge() {
     if (currentLesson) {
       setCode(currentLesson.starter_code);
       setOutput('');
+      setAttempts(0);
+      setShowHints([]);
     }
   };
 
@@ -245,8 +319,15 @@ export default function Challenge() {
                   {currentLesson?.difficulty}
                 </Badge>
               </CardTitle>
-              <div className="text-sm text-muted-foreground">
-                {currentLesson?.points} points
+              <div className="flex items-center gap-3">
+                {attempts > 0 && (
+                  <Badge variant="outline" className="text-sm">
+                    Attempts: {attempts}
+                  </Badge>
+                )}
+                <div className="text-sm text-muted-foreground">
+                  {currentLesson?.points} points
+                </div>
               </div>
             </div>
             <CardDescription>{currentLesson?.description}</CardDescription>
